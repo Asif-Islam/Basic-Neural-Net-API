@@ -105,30 +105,76 @@ class Neural_Network(object):
 
 
 	def verifyValidAddLayer(**kwargs):
+		"""
+		Verify that the call to AddLayer was done so appopriately
+
+		Inputs:
+			**kwargs - Dictionary of optional inputs after popping all relevant values
+
+		"""
 
 		if len(kwargs) > 0:
       		extra = ', '.join(''%s'' % k for k in kwargs.keys())
       		raise ValueError('Unrecognized arguments %s' % extra) 
 
-	def forward_propagate(self, X, mode):
+	def forward_propagate(self, mode, X):
+		"""
+		Calls a forward_propagation through all layers of the neural network
+
+		Inputs:
+			mode: 'train' or 'test'
+			X: (N, D) Numpy array of the input features into the neural net
+
+		"""
 
 		if (mode != 'train' or mode != 'test'):
 			raise ValueError('Unrecognized mode %s', % mode)
+
+		if (mode == 'test' and y is not None):
+			raise ValueError('predicted outputs should not be included in test time')
 
 		output = X;
 		for layer in self.layers:
 			output = layer.forward_pass(output, mode)
 
-		return output
+		return output 		#PREDICTED SCORES
 
 
-	def backward_propagate(self, dout):
-		#Loop over self.layers in reverse and call that layer's backward_pass function
+	def backward_propagate(self, predicted_scores, y):
+		"""
+		Calls a backward propagation through all layers of the neural for weight tuning
+
+		Inputs:
+			predicted_Scores: (N, T) Collection of predicted scores for the training examples,
+							  where N is the # of training examples and T is the # of labels
+
+			y: (N,) Expected label output for the N training examples; 
+				Only applicable during train time to compute gradients
+
+		"""
+		self.layers[-1].backward_pass(predicted_labels, y)
 		for layer in reversed(self.layers[:-1]):
 			dout = layer.backward_pass(dout)
 
+
 	def train(self, X, y):
-		pass
+		"""
+		Calls forward and back propagation to tune the network's weights
+
+		Inputs:
+			X: (N, D) Input feature matrix
+			y: (N,) True labels
+		"""
+
+		predicted_scores = forward_propagate('train', X)
+		backward_propagate(predicted_scores, y)
+
+		#Convert predicted_scores into predicted_labels, i.e. using np.argmax
+		accuracy = np.mean(predicted_labels == y)
+		return 'running accuracy through mini-batch is %f' % accuracy
+
 
 	def predict(self, X):
-		pass
+		predicted_scores = forward_propagate('test', X)
+		#Convert predicted_scores into predicted_labels, i.e. using np.argmax
+		return predicted_labels

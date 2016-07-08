@@ -1,5 +1,6 @@
 import numpy as np
 from layers import Layer
+from optimizers import *
 
 class Affine_Layer(object):
 
@@ -21,16 +22,16 @@ class Affine_Layer(object):
 		
 		#Instantiate an optimizer class based what optimizer is
 		if optim == 'sgd':
-			optimizer = SGD_updater()
+			self.optimizer = SGD_updater()
 		elif optim == 'adam':
-			optimizer = ADAM_updater()
+			self.optimizer = ADAM_updater()
 		elif optimizer = 'rmsprop':
-			optimizer = RMSPROP_updater()
+			self.optimizer = RMSPROP_updater()
 		else:
 			raise ValueError('Requested optimizer was not found')
 
 
-	def forward_pass(self, X):
+	def forward_pass(self, X, mode):
 		"""
 		Inputs:
 			X: (N, D) Numpy array of the input into the layer through forward propagation
@@ -43,7 +44,7 @@ class Affine_Layer(object):
 		return output
 
 
-	def backward_pass(self, dout):
+	def backward_pass(self, dout, mode):
 		"""
 		Inputs:
 			dout: (N, M) Numpy array of the gradient of the loss wrt the forward output 
@@ -52,10 +53,10 @@ class Affine_Layer(object):
 
 		X = cache['X'];
 		dX = dout.dot(self.weight.T)
-		dW = X.T.dot(dout)
+		dW = X.T.dot(dout) + self.reg_strength * self.weight
 		db = np.sum(dout, axis=0)
 
-		#Call optimizer on dW and db
-
+		self.weight = self.optimizer.optim_step(self.weight, dW)
+		self.bias = self.optimizer.optim_step(self.bias, db)
 
 		return dX
